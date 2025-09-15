@@ -68,7 +68,7 @@ def test_summarize_endpoint_with_markdown_files(markdown_file_path, caplog):
     assert response.status_code == 200, f"API call failed for {markdown_file_path} with status {response.status_code}. Response: {response.text}"
 
     response_data = response.json()
-    assert "summary" in response_data
-    assert "meta" in response_data
+    assert "summary" in response_data, f"'summary' key missing in response for {markdown_file_path}"
+    assert "meta" in response_data, f"'meta' key missing in response for {markdown_file_path}"
     assert isinstance(response_data["summary"], str)
     assert len(response_data["summary"]) > 0, "The returned summary should not be empty."
