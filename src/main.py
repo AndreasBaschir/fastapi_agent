@@ -1,27 +1,30 @@
+import os
+
+from dotenv import load_dotenv
 from fastapi import FastAPI, HTTPException
 from google import genai
 from google.genai import types
 from .throttling import RateLimiterMiddleware
-from pydantic import BaseModel, Field
-from typing import Literal, Optional
+from .schemas import RequestModel, ResponseModel
 
-client = genai.Client()
+load_dotenv()
+api_key = os.getenv("GEMINI_API_KEY")
 
+client = genai.Client(api_key=api_key)
 app = FastAPI()
+
+# Apply rate limiting middleware: max 5 requests per minute per IP
 app.add_middleware(RateLimiterMiddleware, max_requests=5, window_seconds=60)
 
-class RequestModel(BaseModel):
-    text: str = Field(..., description="The text to summarize")
-    length: Literal["short", "medium", "long"] = Field(..., description="The desired summary length")
-    style: Literal["bullet", "paragraph", "numbered"] = Field(..., description="The desired summary style")
-    focus: Optional[str] = Field(None, description="Optional topic to emphasize in the summary")
-
-class ResponseModel(BaseModel):
-    summary: str
-    meta: dict
 
 @app.post("/summarize", response_model=ResponseModel)
 async def summarize(request: RequestModel):
+    """
+    Summarizes the provided text based on user preferences for length, style, and focus.
+    - request: RequestModel containing text, length, style, and optional focus.
+    - returns: ResponseModel with the summary and metadata.
+    """
+
     # Validate and clean the input text
     if not request.text.strip():
         raise HTTPException(status_code=400, detail="Text cannot be empty")
@@ -54,6 +57,7 @@ async def summarize(request: RequestModel):
         "focus": request.focus
     }
     return ResponseModel(summary=summary, meta=meta)
+
 
 @app.get("/")
 async def root():
