@@ -13,8 +13,8 @@ api_key = os.getenv("GEMINI_API_KEY")
 client = genai.Client(api_key=api_key)
 app = FastAPI()
 
-# Apply rate limiting middleware: max 5 requests per minute per IP
-app.add_middleware(RateLimiterMiddleware, max_requests=5, window_seconds=60)
+# Apply rate limiting middleware: max 10 requests per minute per IP
+app.add_middleware(RateLimiterMiddleware, max_requests=10, window_seconds=60)
 
 
 @app.post("/summarize", response_model=ResponseModel)
