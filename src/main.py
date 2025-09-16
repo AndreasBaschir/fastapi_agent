@@ -25,7 +25,7 @@ tags_metadata = [
 app = FastAPI(
     openapi_tags=tags_metadata,
     title="FastAPI summarization Agent",
-    description="An API that summarizes text using Google Gemini models with user-defined preferences.",
+    description="An API that summarizes text using Google Gemini 2.5 Flash with user-defined preferences.",
     version="1.0.0",
     contact={
         "name": "Andreas Baschir",
@@ -43,9 +43,23 @@ app.add_middleware(RateLimiterMiddleware, max_requests=10, window_seconds=60)
 @app.post("/summarize", tags=["summarize"], response_model=ResponseModel)
 async def summarize(request: RequestModel):
     """
-    Summarizes the provided text based on user preferences for length, style, and focus.
-    - request: RequestModel containing text, length, style, and optional focus.
-    - returns: ResponseModel with the summary and metadata.
+    Summarizes a given block of text using the Gemini 2.5 Flash model.
+
+    This endpoint takes a piece of text and user preferences for summarization
+    and returns a generated summary along with metadata about the request.
+
+    ### Request Body
+    - **text** (str): The block of text to summarize.
+    - **length** (str): The desired length of the summary.
+      - Accepted values: `short`, `medium`, `long`.
+    - **style** (str): The desired output format for the summary.
+      - Accepted values: `bullet`, `paragraph`, `numbered`.
+    - **focus** (Optional[str]): An optional topic or keyword to emphasize in the summary.
+
+    ### Response Body
+    - **summary** (str): The generated summary of the text.
+    - **meta** (dict): Metadata about the request, including the model used,
+      length, style, and focus.
     """
 
     # Validate and clean the input text
