@@ -36,3 +36,19 @@ class RequestModel(BaseModel):
 class ResponseModel(BaseModel):
     summary: str = Field(description="The generated summary of the text.")
     meta: dict = Field(description="Metadata about the request, including model, length, style, and focus.")
+
+    model_config = {
+        "json_schema_extra": {
+            "examples": [
+                {
+                    "summary": "*   Distillation is a technique that uses one AI model to improve another.\n*   It is making it cheaper to build decent large language models (LLMs).\n*   This cost reduction is causing excitement and concern in the AI ecosystem.",
+                    "meta": {
+                        "model": "gemini-2.5-flash",
+                        "length": "short",
+                        "style": "bullet",
+                        "focus": "distillation"
+                    }
+                }
+            ]
+        }
+    }
