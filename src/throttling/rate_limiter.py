@@ -25,7 +25,16 @@ class RateLimiterMiddleware(BaseHTTPMiddleware):
         if len(self.clients[client_ip]) >= self.max_requests:
             return JSONResponse(
                 status_code=429,
-                content={"detail": "Too many requests"}
+                content={
+                    "error": "Rate limit exceeded",
+                    "message": f"Maximum {self.max_requests} requests per {self.window_seconds} seconds allowed",
+                    "retry_after_seconds": self.window_seconds
+                },
+                headers={
+                    "Retry-After": str(self.window_seconds),
+                    "X-RateLimit-Limit": str(self.max_requests),
+                    "X-RateLimit-Window": str(self.window_seconds)
+                }
             )
 
         # Record the current request
