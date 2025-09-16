@@ -11,7 +11,19 @@ load_dotenv()
 api_key = os.getenv("GEMINI_API_KEY")
 client = genai.Client(api_key=api_key)
 
+tags_metadata = [
+    {
+        "name": "summarize",
+        "description": "Text summarization using Google Gemini 2.5 Flash.",
+        "externalDocs": {
+            "description": "Gemini 2.5 Flash Model Docs",
+            "url": "https://cloud.google.com/vertex-ai/generative-ai/docs/models/gemini/2-5-flash",
+        },
+    }
+]
+
 app = FastAPI(
+    openapi_tags=tags_metadata,
     title="FastAPI summarization Agent",
     description="An API that summarizes text using Google Gemini models with user-defined preferences.",
     version="1.0.0",
@@ -28,7 +40,7 @@ app = FastAPI(
 app.add_middleware(RateLimiterMiddleware, max_requests=10, window_seconds=60)
 
 
-@app.post("/summarize", response_model=ResponseModel)
+@app.post("/summarize", tags=["summarize"], response_model=ResponseModel)
 async def summarize(request: RequestModel):
     """
     Summarizes the provided text based on user preferences for length, style, and focus.
