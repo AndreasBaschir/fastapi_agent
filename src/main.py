@@ -20,6 +20,8 @@ app = FastAPI(
         "url": "https://www.linkedin.com/in/andreas-baschir-21b963236/",
         "email": "andreas.baschir@stud.etti.upb.ro",
     },
+    docs_url="/",
+    redoc_url=None,
 )
 
 # Apply rate limiting middleware: max 10 requests per minute per IP
@@ -66,9 +68,3 @@ async def summarize(request: RequestModel):
         "focus": request.focus
     }
     return ResponseModel(summary=summary, meta=meta)
-
-
-@app.get("/")
-async def root():
-
-    return {"message": "Welcome to the FastAPI Agent! Use the /summarize endpoint to get started."}
