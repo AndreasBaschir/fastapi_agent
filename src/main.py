@@ -9,9 +9,18 @@ from .schemas import RequestModel, ResponseModel
 
 load_dotenv()
 api_key = os.getenv("GEMINI_API_KEY")
-
 client = genai.Client(api_key=api_key)
-app = FastAPI()
+
+app = FastAPI(
+    title="FastAPI summarization Agent",
+    description="An API that summarizes text using Google Gemini models with user-defined preferences.",
+    version="1.0.0",
+    contact={
+        "name": "Andreas Baschir",
+        "url": "https://www.linkedin.com/in/andreas-baschir-21b963236/",
+        "email": "andreas.baschir@stud.etti.upb.ro",
+    },
+)
 
 # Apply rate limiting middleware: max 10 requests per minute per IP
 app.add_middleware(RateLimiterMiddleware, max_requests=10, window_seconds=60)
@@ -61,4 +70,5 @@ async def summarize(request: RequestModel):
 
 @app.get("/")
 async def root():
+
     return {"message": "Welcome to the FastAPI Agent! Use the /summarize endpoint to get started."}
