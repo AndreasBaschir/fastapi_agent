@@ -4,8 +4,11 @@ from dotenv import load_dotenv
 from fastapi import FastAPI, HTTPException
 from google import genai
 from google.genai import types
-from .throttling import RateLimiterMiddleware
+
+from .config.prompts import SYSTEM_INSTRUCTION, build_user_prompt
 from .schemas import RequestModel, ResponseModel
+from .throttling import RateLimiterMiddleware
+
 
 load_dotenv()
 api_key = os.getenv("GEMINI_API_KEY")
@@ -68,17 +71,20 @@ async def summarize(request: RequestModel):
 
     request.text = request.text.replace("\r", "").replace("\n", " ").replace("\t", " ")
 
-    # Construct the user prompt
-    user_prompt = f"Summarize the following text in a {request.length} {request.style} format:\n\n{request.text}"
-    if request.focus:
-        user_prompt += f" Emphasize the topic: {request.focus}."
+    # Build the user prompt using the separated function
+    user_prompt = build_user_prompt(
+        text=request.text,
+        length=request.length,
+        style=request.style,
+        focus=request.focus
+    )
 
     try:
         # Call the external API
         response = client.models.generate_content(
             model="gemini-2.5-flash",
             config=types.GenerateContentConfig(
-                system_instruction="You are a helpful assistant that summarizes text based on user preferences."
+                system_instruction=SYSTEM_INSTRUCTION
             ),
             contents=user_prompt
         )
