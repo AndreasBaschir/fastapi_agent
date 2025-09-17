@@ -47,7 +47,7 @@ def clean_markdown_for_json(file_path: str) -> str:
 
 if __name__ == "__main__":
     if len(sys.argv) != 2:
-        print("Usage: python clean_markdown.py <path_to_markdown_file>")
+        print("Usage: python scripts.clean_markdown.py <path_to_markdown_file>")
     else:
         input_file = sys.argv[1]
         cleaned_text = clean_markdown_for_json(input_file)
