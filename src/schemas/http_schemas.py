@@ -5,7 +5,6 @@ class RequestModel(BaseModel):
     text: str = Field(
         ..., 
         description="The block of text you want to summarize.",
-        min_length=50
     )
     length: Literal["short", "medium", "long"] = Field(
         ..., 
