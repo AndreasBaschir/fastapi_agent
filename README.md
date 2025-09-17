@@ -2,12 +2,15 @@
 
 A FastAPI-based microservice that provides intelligent text summarization using Google Gemini 2.5 Flash with customizable length, style, and focus parameters. Designed to be callable as a tool by LangChain.
 
-You can find the app at [this link](https://fastapi-agent-1vpx.onrender.com). The containerized app is hosted using render.com.
+You can find the app at [this link](https://fastapi-agent-1vpx.onrender.com). The containerized app is hosted using [render.com](render.com).
+
+Press `Try it out` and by using the RequestBody schema, send a request.
 
 ## Table of Contents
 
 - [Features](#features)
 - [Setup Instructions](#setup-instructions)
+- [Project Structure](#project-structure)
 - [API Documentation](#api-documentation)
 - [LangChain Integration](#langchain-integration)
 - [Usage Examples](#usage-examples)
@@ -15,7 +18,6 @@ You can find the app at [this link](https://fastapi-agent-1vpx.onrender.com). Th
 - [Testing](#testing)
 - [Logging](#logging)
 - [Prompt Design](#prompt-design)
-- [Project Structure](#project-structure)
 
 ## Features
 
@@ -64,13 +66,47 @@ Create a `.env` file in the project root:
 GEMINI_API_KEY=your_gemini_api_key_here
 ```
 
-### 5. Run the Application
+### 5. Run the Application locally
 
 ```bash
 uvicorn src.main:app --reload
 ```
 
 The API will be available at `http://localhost:8000` with interactive documentation at `http://localhost:8000/`.
+
+## Project Structure
+
+```
+fastapi_agent/
+├── src/
+│   ├── main.py                    # FastAPI application with logging
+│   ├── config/
+│   │   └── prompts.py            # LLM prompt templates
+│   ├── schemas/
+│   │   └── http_schemas.py       # Pydantic models
+│   ├── throttling/
+│   │   └── rate_limiter.py       # Rate limiting middleware
+│   └── tests/
+│       └── test_endpoint.py      # Unit tests with logging
+├── utils/
+│   └── logging_config.py         # Centralized logging utility
+├── tools/
+│   └── langchain_integration.py  # LangChain tool definition
+├── examples/
+│   └── langchain_agent_demo.py   # Agent demonstration with logging
+├── scripts/
+│   └── clean_markdown.py         # Utility script for cleaning markdown
+├── docs/
+│   └── examples/                 # Test markdown files
+├── logs/                         # Generated log files (organized by component)
+│   ├── api/                      # FastAPI logs
+│   ├── examples/                 # Agent demo logs
+│   └── tests/                    # Test execution logs
+├── Dockerfile                    # Container configuration
+├── requirements.txt              # Python dependencies
+└── README.md                     # This file
+```
+
 
 ## API Documentation
 
@@ -225,9 +261,34 @@ The demo processes the provided example text and logs results to `logs/examples/
 
 ## Usage Examples
 
-### Helper Script for Markdown Processing
+### Testing the Public Hosted API
 
-For testing with the provided example files, use the markdown cleaning script:
+The FastAPI application is deployed and publicly accessible at: **https://fastapi-agent-1vpx.onrender.com**
+
+#### Quick Test with cURL
+
+```bash
+curl -X POST "https://fastapi-agent-1vpx.onrender.com/summarize" \
+     -H "Content-Type: application/json" \
+     -d '{
+       "text": "The cost of AI computing is falling. A technique called distillation is making it cheaper to build decent LLMs. This shift excites some and alarms others in the AI ecosystem.",
+       "length": "short",
+       "style": "bullet",
+       "focus": "distillation"
+     }'
+```
+
+#### Interactive Documentation
+
+Visit **https://fastapi-agent-1vpx.onrender.com/** for the live interactive API documentation where you can:
+- View detailed parameter descriptions
+- Test the API directly in your browser
+- See example requests and responses
+- Download the OpenAPI specification
+
+#### Using the Markdown Cleaning Script for Public API Testing
+
+For testing with the provided example files, use the markdown cleaning script to prepare text:
 
 ```bash
 # On Linux/Mac
@@ -237,7 +298,7 @@ python scripts/clean_markdown.py docs/examples/example_LLM_costs_overview.md | x
 python scripts/clean_markdown.py docs/examples/example_LLM_costs_overview.md | clip.exe
 ```
 
-This removes markdown formatting and makes the text suitable for API testing using the interactive FastAPI docs. This script can be used on any .md file you want to use:
+This script can be used on any .md file:
 
 ```bash
 # On Linux/Mac
@@ -247,15 +308,67 @@ python scripts/clean_markdown.py your_file_path.md | xclip -selection clipboard
 python scripts/clean_markdown.py your_file_path.md | clip.exe
 ```
 
-After running the script, the text will be saved in the clipboard, and you can just paste it in the text in the RequestBody of the JSON, after pressing `Try it out` in the interactive docs. 
+After running the script, the cleaned text will be in your clipboard. Navigate to the **live API docs** at https://fastapi-agent-1vpx.onrender.com/, press `Try it out`, and paste the text into the RequestBody JSON field.
 
-### Interactive Documentation
+#### Testing with Different Parameters
 
-Visit `http://localhost:8000/` for the interactive API documentation where you can:
-- View detailed parameter descriptions
-- Test the API directly in your browser
-- See example requests and responses
-- Download the OpenAPI specification
+Try these parameter combinations with the public API:
+
+1. **Short Bullet Summary with Focus**:
+   ```json
+   {
+     "text": "[your cleaned text here]",
+     "length": "short",
+     "style": "bullet",
+     "focus": "costs"
+   }
+   ```
+
+2. **Medium Paragraph Summary**:
+   ```json
+   {
+     "text": "[your cleaned text here]",
+     "length": "medium",
+     "style": "paragraph",
+     "focus": "pricing"
+   }
+   ```
+
+3. **Long Numbered List**:
+   ```json
+   {
+     "text": "[your cleaned text here]",
+     "length": "long",
+     "style": "numbered",
+     "focus": "competition"
+   }
+   ```
+
+### Local Development Testing
+
+#### Running Locally
+
+For local development and testing:
+
+```bash
+# Start the local server
+uvicorn src.main:app --reload
+```
+
+The local API will be available at `http://localhost:8000` with interactive documentation at `http://localhost:8000/`.
+
+#### Local cURL Testing
+
+```bash
+curl -X POST "http://localhost:8000/summarize" \
+     -H "Content-Type: application/json" \
+     -d '{
+       "text": "Your test text here...",
+       "length": "short",
+       "style": "bullet",
+       "focus": "distillation"
+     }'
+```
 
 ## Docker Deployment
 
@@ -279,14 +392,38 @@ pytest src/tests/ -v
 
 The tests automatically use all markdown files in `docs/examples/` to validate the API endpoint and generate detailed logs in `logs/tests/`.
 
+### Test the hosted Docker app
+
+### Testing the Public API
+
+The hosted application at **https://fastapi-agent-1vpx.onrender.com** can be tested directly without any setup:
+
+1. **Browser Testing**: Visit https://fastapi-agent-1vpx.onrender.com/ and use the interactive docs
+2. **cURL Testing**: Use the cURL examples above with the public URL
+3. **Postman/Insomnia**: Import the OpenAPI spec from the public docs
+4. **LangChain Integration**: Point your tools to the public URL
+
+### Local Unit Tests
+
+For local development, run the comprehensive test suite:
+
+```bash
+pytest src/tests/ -v
+```
+
+The tests automatically use all markdown files in `docs/examples/` to validate the API endpoint and generate detailed logs in `logs/tests/`.
+
 ### Test Coverage
 
 Tests cover:
-- API endpoint functionality
+- API endpoint functionality with real markdown content
 - Response structure validation
-- Error handling
-- Integration with real markdown content
+- Error handling for various edge cases
+- Integration testing with multiple file types
 - Logging functionality verification
+- Rate limiting behavior
+
+**Note**: The unit tests are designed for local development. The public API includes rate limiting (10 requests/minute), so extensive automated testing should be done against a local instance.
 
 ## Logging
 
@@ -351,54 +488,7 @@ The `build_user_prompt()` function dynamically constructs prompts based on:
 1. **Modular Approach**: Separates system instructions from user prompts for maintainability
 2. **Parameter Reflection**: Ensures all user preferences are incorporated into the LLM prompt
 3. **Clear Guidelines**: Provides specific length targets to ensure consistent output
-4. **Focus Integration**: Seamlessly incorporates optional focus topics when provided
-
-### Adapting the Prompt
-
-To modify summarization behavior:
-
-1. **Edit System Instruction** (`src/config/prompts.py`):
-   - Adjust length guidelines
-   - Add new style formats
-   - Modify tone or approach
-
-2. **Extend User Prompt Builder**:
-   - Add new parameters
-   - Include additional context
-   - Implement custom formatting rules
-
-## Project Structure
-
-```
-fastapi_agent/
-├── src/
-│   ├── main.py                    # FastAPI application with logging
-│   ├── config/
-│   │   └── prompts.py            # LLM prompt templates
-│   ├── schemas/
-│   │   └── http_schemas.py       # Pydantic models
-│   ├── throttling/
-│   │   └── rate_limiter.py       # Rate limiting middleware
-│   └── tests/
-│       └── test_endpoint.py      # Unit tests with logging
-├── utils/
-│   └── logging_config.py         # Centralized logging utility
-├── tools/
-│   └── langchain_integration.py  # LangChain tool definition
-├── examples/
-│   └── langchain_agent_demo.py   # Agent demonstration with logging
-├── scripts/
-│   └── clean_markdown.py         # Utility script for cleaning markdown
-├── docs/
-│   └── examples/                 # Test markdown files
-├── logs/                         # Generated log files (organized by component)
-│   ├── api/                      # FastAPI logs
-│   ├── examples/                 # Agent demo logs
-│   └── tests/                    # Test execution logs
-├── Dockerfile                    # Container configuration
-├── requirements.txt              # Python dependencies
-└── README.md                     # This file
-```
+4. **Focus Integration**: Incorporates optional focus topics when provided
 
 ## Rate Limiting
 
@@ -426,7 +516,3 @@ All errors are comprehensively logged with stack traces for debugging.
 4. Ensure all tests pass
 5. Use the centralized logging system for any new components
 6. Submit a pull request
-
-## License
-
-This project is developed as a demonstration of FastAPI and LLM integration capabilities.
