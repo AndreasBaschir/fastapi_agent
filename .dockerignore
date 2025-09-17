@@ -3,3 +3,6 @@ venv/
 .git
 test_results.log
 docs/
+examples/
+tools/
+clean_markdown.py
