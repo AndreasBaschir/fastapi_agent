@@ -1,6 +1,8 @@
 # FastAPI Summarization Agent
 
-A FastAPI-based microservice that provides intelligent text summarization using Google Gemini 2.5 Flash with customizable length, style, and focus parameters. Designed to be callable as a tool by LangChain or LlamaIndex agents.
+A FastAPI-based microservice that provides intelligent text summarization using Google Gemini 2.5 Flash with customizable length, style, and focus parameters. Designed to be callable as a tool by LangChain.
+
+You can find the app at [this link](https://fastapi-agent-1vpx.onrender.com). The containerized app is hosted using render.com.
 
 ## Table of Contents
 
@@ -11,6 +13,7 @@ A FastAPI-based microservice that provides intelligent text summarization using 
 - [Usage Examples](#usage-examples)
 - [Docker Deployment](#docker-deployment)
 - [Testing](#testing)
+- [Logging](#logging)
 - [Prompt Design](#prompt-design)
 - [Project Structure](#project-structure)
 
@@ -19,6 +22,7 @@ A FastAPI-based microservice that provides intelligent text summarization using 
 - **Customizable Summarization**: Support for different lengths (short, medium, long), styles (bullet, paragraph, numbered), and focus topics
 - **Real LLM Integration**: Uses Google Gemini 2.5 Flash for high-quality summaries
 - **Rate Limiting**: Built-in middleware to prevent API abuse (10 requests/minute per IP)
+- **Centralized Logging**: Comprehensive logging system with timestamped logs organized by component
 - **LangChain Compatible**: Designed to work seamlessly with LangChain RequestsPostTool
 - **Interactive Documentation**: Auto-generated OpenAPI docs with examples
 - **Containerized**: Docker support for easy deployment
@@ -127,6 +131,8 @@ curl -X POST "http://localhost:8000/summarize" \
 
 ## LangChain Integration
 
+In `/examples/langchain_agent_demo.py`
+
 ### Architecture Overview
 
 The service is designed to work seamlessly with LangChain agents:
@@ -175,6 +181,11 @@ summarization_tool = RequestsPostTool(
 from langchain.agents import initialize_agent, AgentType
 from langchain_google_genai import ChatGoogleGenerativeAI
 from tools.langchain_integration import summarization_tool
+from utils.logging_config import setup_logging, get_logger
+
+# Set up logging
+log_file = setup_logging("agent_demo", "examples")
+logger = get_logger(__name__)
 
 # Initialize LLM
 llm = ChatGoogleGenerativeAI(
@@ -210,7 +221,7 @@ focusing on costs: [your text here]
    python3 -m examples.langchain_agent_demo
    ```
 
-The demo processes the provided example text and logs results to `examples/agent_demo.log`.
+The demo processes the provided example text and logs results to `logs/examples/agent_demo_YYYYMMDD_HHMMSS.log`.
 
 ## Usage Examples
 
@@ -226,7 +237,17 @@ python scripts/clean_markdown.py docs/examples/example_LLM_costs_overview.md | x
 python scripts/clean_markdown.py docs/examples/example_LLM_costs_overview.md | clip.exe
 ```
 
-This removes markdown formatting and makes the text suitable for API testing using the interactive FastAPI docs.
+This removes markdown formatting and makes the text suitable for API testing using the interactive FastAPI docs. This script can be used on any .md file you want to use:
+
+```bash
+# On Linux/Mac
+python scripts/clean_markdown.py your_file_path.md | xclip -selection clipboard
+
+# On Windows/WSL
+python scripts/clean_markdown.py your_file_path.md | clip.exe
+```
+
+After running the script, the text will be saved in the clipboard, and you can just paste it in the text in the RequestBody of the JSON, after pressing `Try it out` in the interactive docs. 
 
 ### Interactive Documentation
 
@@ -248,19 +269,6 @@ docker build -t fastapi-summarization .
 docker run -d -p 8000:8000 --env-file .env fastapi-summarization
 ```
 
-### Docker Compose (Optional)
-
-```yaml
-version: '3.8'
-services:
-  summarization-api:
-    build: .
-    ports:
-      - "8000:8000"
-    environment:
-      - GEMINI_API_KEY=${GEMINI_API_KEY}
-```
-
 ## Testing
 
 ### Run Unit Tests
@@ -269,7 +277,7 @@ services:
 pytest src/tests/ -v
 ```
 
-The tests automatically use all markdown files in `docs/examples/` to validate the API endpoint.
+The tests automatically use all markdown files in `docs/examples/` to validate the API endpoint and generate detailed logs in `logs/tests/`.
 
 ### Test Coverage
 
@@ -278,6 +286,52 @@ Tests cover:
 - Response structure validation
 - Error handling
 - Integration with real markdown content
+- Logging functionality verification
+
+## Logging
+
+### Centralized Logging System
+
+The application uses a centralized logging utility (`utils/logging_config.py`) that provides:
+
+- **Timestamped log files**: Each component run creates a unique log file
+- **Organized structure**: Logs are organized by component in subdirectories
+- **Dual output**: Logs to both console and file simultaneously
+- **Consistent formatting**: Standardized log format across all components
+
+### Log Organization
+
+```
+logs/
+├── api/                    # FastAPI application logs
+│   └── fastapi_app_YYYYMMDD_HHMMSS.log
+├── examples/               # LangChain agent demo logs
+│   └── agent_demo_YYYYMMDD_HHMMSS.log
+└── tests/                  # Test execution logs
+    └── test_endpoint_YYYYMMDD_HHMMSS.log
+```
+
+### Using the Logging System
+
+```python
+from utils.logging_config import setup_logging, get_logger
+
+# Set up logging for your component
+log_file = setup_logging("component_name", "subdirectory")
+logger = get_logger(__name__)
+
+# Use the logger
+logger.info("Your log message here")
+```
+
+### Log Content
+
+Logs include:
+- **API requests/responses** with timing information
+- **LLM API calls** with performance metrics
+- **Error handling** with full stack traces
+- **Business logic** events and data processing
+- **Startup/shutdown** events
 
 ## Prompt Design
 
@@ -318,26 +372,32 @@ To modify summarization behavior:
 ```
 fastapi_agent/
 ├── src/
-│   ├── main.py                 # FastAPI application
+│   ├── main.py                    # FastAPI application with logging
 │   ├── config/
-│   │   └── prompts.py         # LLM prompt templates
+│   │   └── prompts.py            # LLM prompt templates
 │   ├── schemas/
-│   │   └── http_schemas.py    # Pydantic models
+│   │   └── http_schemas.py       # Pydantic models
 │   ├── throttling/
-│   │   └── rate_limiter.py    # Rate limiting middleware
+│   │   └── rate_limiter.py       # Rate limiting middleware
 │   └── tests/
-│       └── test_endpoint.py   # Unit tests
+│       └── test_endpoint.py      # Unit tests with logging
+├── utils/
+│   └── logging_config.py         # Centralized logging utility
 ├── tools/
 │   └── langchain_integration.py  # LangChain tool definition
 ├── examples/
-│   └── langchain_agent_demo.py   # Agent demonstration
+│   └── langchain_agent_demo.py   # Agent demonstration with logging
 ├── scripts/
-│   └── clean_markdown.py     # Utility script for cleaning markdown
+│   └── clean_markdown.py         # Utility script for cleaning markdown
 ├── docs/
-│   └── examples/              # Test markdown files
-├── Dockerfile                 # Container configuration
-├── requirements.txt           # Python dependencies
-└── README.md                 # This file
+│   └── examples/                 # Test markdown files
+├── logs/                         # Generated log files (organized by component)
+│   ├── api/                      # FastAPI logs
+│   ├── examples/                 # Agent demo logs
+│   └── tests/                    # Test execution logs
+├── Dockerfile                    # Container configuration
+├── requirements.txt              # Python dependencies
+└── README.md                     # This file
 ```
 
 ## Rate Limiting
@@ -346,6 +406,7 @@ The API includes built-in rate limiting:
 - **Limit**: 10 requests per minute per IP address
 - **Headers**: Includes `Retry-After` and rate limit information
 - **Response**: Returns 429 status code when exceeded
+- **Logging**: Rate limit violations are logged for monitoring
 
 ## Error Handling
 
@@ -355,13 +416,16 @@ The API provides clear error responses for:
 - LLM API failures
 - Rate limit violations
 
+All errors are comprehensively logged with stack traces for debugging.
+
 ## Contributing
 
 1. Fork the repository
 2. Create a feature branch
 3. Add tests for new functionality
 4. Ensure all tests pass
-5. Submit a pull request
+5. Use the centralized logging system for any new components
+6. Submit a pull request
 
 ## License
 
