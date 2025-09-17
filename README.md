@@ -101,7 +101,7 @@ Summarizes text with customizable parameters using Google Gemini 2.5 Flash.
 
 #### Parameters
 
-- **text** (string, required): The text to summarize (minimum 50 characters)
+- **text** (string, required): The text to summarize
 - **length** (string, required): Summary length
   - `short`: 2-4 sentences or bullet points
   - `medium`: 1-2 paragraphs or 5-8 bullet points
