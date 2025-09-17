@@ -1,19 +1,12 @@
 import os
-import logging
-
 from langchain.agents import initialize_agent, AgentType
 from langchain_google_genai import ChatGoogleGenerativeAI
 from tools.langchain_integration import summarization_tool
+from utils.logging_config import setup_logging, get_logger
 
-# Set up logging to current directory
-logging.basicConfig(
-    level=logging.INFO,
-    format='%(asctime)s - %(levelname)s - %(message)s',
-    filename='examples/agent_demo.log',
-    filemode='w'
-)
-
-logger = logging.getLogger(__name__)
+# Set up logging using centralized utility
+log_file = setup_logging("agent_demo", "examples")
+logger = get_logger(__name__)
 
 # Initialize Gemini LLM for the agent
 llm = ChatGoogleGenerativeAI(
@@ -32,11 +25,14 @@ agent = initialize_agent(
 
 # Example usage
 if __name__ == "__main__":
+    logger.info(f"Agent demo logs are being saved to: {log_file}")
+    
     # Read one of the example files
     with open("docs/examples/example_LLM_costs_overview.md", "r") as f:
         text_content = f.read()
     
     logger.info("Starting summarization request")
+    logger.info(f"Text length: {len(text_content)} characters")
     
     response = agent.invoke(f"""
     Please summarize the following text in a short manner (less than 200 words) 
@@ -46,4 +42,5 @@ if __name__ == "__main__":
     """)
     
     logger.info(f"Response: {response}")
-    print("Response logged to agent_demo.log")
+    logger.info("✅ Agent demo completed successfully")
+    print(f"Response logged to {log_file}")
