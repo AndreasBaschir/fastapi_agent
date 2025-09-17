@@ -1,8 +1,39 @@
+# Python
 __pycache__/
+*.pyc
+*.pyo
+*.pyd
+.Python
+
+# Virtual environments
 venv/
-.git
-test_results.log
+env/
+ENV/
+
+# Git
+.git/
+.gitignore
+
+# Development files
+.vscode/
+.idea/
+
+# Logs (generated at runtime)
+logs/
+
+# Documentation (optional - keep if you want docs in container)
 docs/
-examples/
-tools/
-clean_markdown.py
+
+# Testing artifacts
+.pytest_cache/
+test_results.log
+.coverage
+
+# OS files
+.DS_Store
+Thumbs.db
+
+# Environment files (security)
+.env
+.env.local
+.env.*.local
